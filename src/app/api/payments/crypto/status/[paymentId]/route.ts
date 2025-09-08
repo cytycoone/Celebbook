@@ -1,4 +1,4 @@
-# Usually this is server code; only patch if using useEffect or useSearchParamsimport { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { NOWPaymentsClient } from "@/utils/nowpayments";
 
 const getClient = () => {

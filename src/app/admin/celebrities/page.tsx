@@ -1,6 +1,5 @@
-# Add at the top if you want to remove useEffect warnings
-# 'use client';
-# export const dynamic = 'force-dynamic';'use client';
+ 'use client';
+ export const dynamic = 'force-dynamic';'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
