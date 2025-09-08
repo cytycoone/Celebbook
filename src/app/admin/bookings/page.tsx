@@ -1,4 +1,4 @@
-'use client';
+# Add the same two lines at the top if desired'use client';
 
 import { useState, useEffect } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';

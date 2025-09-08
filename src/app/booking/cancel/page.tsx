@@ -1,4 +1,6 @@
-'use client';
+# Add at the top:
+# 'use client';
+# export const dynamic = 'force-dynamic';'use client';
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
