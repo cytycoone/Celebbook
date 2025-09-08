@@ -13,12 +13,12 @@ const BookingSuccessPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBooking = async () => {
-      if (!orderId) {
-        setLoading(false);
-        return;
-      }
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
 
+    const fetchBooking = async () => {
       try {
         const response = await fetch(`/api/bookings/${orderId}`);
         if (response.ok) {
@@ -52,9 +52,9 @@ const BookingSuccessPage = () => {
         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center">
           <FaCheck className="text-3xl text-white" />
         </div>
-        
+
         <h1 className="text-3xl font-bold text-white mb-4">Payment Successful!</h1>
-        
+
         {booking ? (
           <div className="space-y-4 mb-6">
             <p className="text-gray-300">
@@ -99,7 +99,7 @@ const BookingSuccessPage = () => {
           >
             Return to Home
           </Link>
-          
+
           {booking && (
             <Link
               href={`/booking/${booking.celebrityId}`}
