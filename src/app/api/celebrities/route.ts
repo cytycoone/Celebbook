@@ -1,43 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MemoryStorage } from "@/utils/storage";
-
-// Sample celebrities data for when database is not available
-const sampleCelebrities = [
-    {
-        _id: "1",
-        name: "Emma Watson",
-        profession: "Actress", 
-        imageUrl: "/celebrities/emma-watson.jpg",
-        slug: "emma-watson",
-        bio: "British actress and activist known for her role as Hermione Granger in the Harry Potter film series."
-    },
-    {
-        _id: "2",
-        name: "Gordon Ramsay", 
-        profession: "Chef",
-        imageUrl: "/celebrities/gordon-ramsay.jpg",
-        slug: "gordon-ramsay",
-        bio: "British chef, restaurateur, television personality, and writer known for his fiery temper and culinary expertise."
-    },
-    {
-        _id: "3",
-        name: "Serena Williams",
-        profession: "Athlete", 
-        imageUrl: "/celebrities/serena-williams.jpg",
-        slug: "serena-williams",
-        bio: "American professional tennis player and former world No. 1 with 23 Grand Slam singles titles."
-    },
-    {
-        _id: "4",
-        name: "John Legend",
-        profession: "Musician",
-        imageUrl: "/celebrities/john-legend.jpg",
-        slug: "john-legend", 
-        bio: "American singer, songwriter, pianist, and actor who has won multiple Grammy Awards."
-    }
-];
-
-const sampleProfessions = ["Actress", "Chef", "Athlete", "Musician"];
+import { connectDb } from "@/config";
+import Celebrity from "@/models/Celebrity";
 
 export async function GET(req: NextRequest) {
     try {
@@ -47,34 +10,41 @@ export async function GET(req: NextRequest) {
         const search = searchParams.get('search') || '';
         const profession = searchParams.get('profession') || '';
 
-        const result = MemoryStorage.getAllCelebrities(page, limit);
-        let { celebrities } = result;
-        
-        // Apply search filter
+        await connectDb();
+
+        // Build query
+        const query: any = {};
         if (search) {
-            celebrities = celebrities.filter(celebrity =>
-                celebrity.name.toLowerCase().includes(search.toLowerCase())
-            );
+            query.name = { $regex: search, $options: 'i' };
         }
-        
-        // Apply profession filter  
         if (profession) {
-            celebrities = celebrities.filter(celebrity =>
-                celebrity.profession === profession
-            );
+            query.profession = profession;
         }
 
-        console.log('Using memory storage celebrities data');
+        // Get total count
+        const total = await Celebrity.countDocuments(query);
+
+        // Get celebrities with pagination
+        const celebrities = await Celebrity.find(query)
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ featured: -1, name: 1 })
+            .lean();
+
+        // Get all unique professions
+        const professions = await Celebrity.distinct('profession');
+
+        console.log('Retrieved celebrities from MongoDB');
         
         return NextResponse.json({
             celebrities,
             pagination: {
-                total: result.total,
-                page: result.page,
+                total,
+                page,
                 limit,
-                totalPages: result.totalPages
+                totalPages: Math.ceil(total / limit)
             },
-            professions: sampleProfessions
+            professions
         });
     } catch (error) {
         console.error('Error fetching celebrities:', error);

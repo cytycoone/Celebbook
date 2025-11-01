@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
-import { MemoryStorage } from "@/utils/storage";
+import { connectDb } from "@/config";
+import Celebrity from "@/models/Celebrity";
 
 export async function GET() {
     try {
-        const celebrities = MemoryStorage.getFeaturedCelebrities();
-        console.log('Found featured celebrities:', celebrities);
+        await connectDb();
+        
+        const celebrities = await Celebrity.find({ featured: true })
+            .sort({ name: 1 })
+            .lean();
+        
+        console.log('Found featured celebrities from MongoDB:', celebrities);
         return NextResponse.json(celebrities);
     } catch (error) {
         console.error('Error fetching featured celebrities:', error);

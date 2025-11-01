@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "create-admin": "ts-node scripts/create-admin.ts"
+    "create-admin": "tsx scripts/create-admin.ts",
+    "seed": "tsx scripts/seed-celebrities.ts"
   },
   "dependencies": {
     "@paypal/checkout-server-sdk": "^1.0.3",
@@ -23,7 +24,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
-    "resend": "^4.3.0"
+    "resend": "^4.3.0",
+    "tsx": "^4.20.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
