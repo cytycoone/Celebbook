@@ -1,12 +1,12 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaTimes, FaSpinner } from 'react-icons/fa';
 
-const BookingCancelPage = () => {
+function BookingCancelContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id');
   const [cancelInfo, setCancelInfo] = useState<any>(null);
@@ -60,6 +60,20 @@ const BookingCancelPage = () => {
       </Link>
     </div>
   );
-};
+}
 
-export default BookingCancelPage;
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <FaSpinner className="text-4xl text-red-500 animate-spin" />
+    </div>
+  );
+}
+
+export default function BookingCancelPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BookingCancelContent />
+    </Suspense>
+  );
+}

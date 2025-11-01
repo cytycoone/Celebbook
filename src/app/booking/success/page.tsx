@@ -1,12 +1,12 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaCheck, FaSpinner } from 'react-icons/fa';
 
-const BookingSuccessPage = () => {
+function BookingSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id');
   const [booking, setBooking] = useState<any>(null);
@@ -60,6 +60,20 @@ const BookingSuccessPage = () => {
       </Link>
     </div>
   );
-};
+}
 
-export default BookingSuccessPage;
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <FaSpinner className="text-4xl text-purple-500 animate-spin" />
+    </div>
+  );
+}
+
+export default function BookingSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BookingSuccessContent />
+    </Suspense>
+  );
+}
