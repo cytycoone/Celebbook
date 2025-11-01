@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MemoryStorage } from "@/utils/storage";
+import { connectDb } from "@/config";
+import Celebrity from "@/models/Celebrity";
+import mongoose from "mongoose";
 
 export async function GET(req: NextRequest, context: any) {
     const { params } = context;
@@ -16,7 +18,17 @@ export async function GET(req: NextRequest, context: any) {
 
         console.log('Processing request for celebrity ID:', id);
 
-        const celebrity = MemoryStorage.getCelebrityById(id);
+        await connectDb();
+
+        // Check if the ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json(
+                { error: 'Invalid celebrity ID format' },
+                { status: 400 }
+            );
+        }
+
+        const celebrity = await Celebrity.findById(id).lean();
         if (!celebrity) {
             return NextResponse.json(
                 { error: 'Celebrity not found' },

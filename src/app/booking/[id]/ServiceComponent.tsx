@@ -131,6 +131,7 @@ const ServiceComponent = ({ params }: ServiceComponentProps) => {
           fill
           className="object-cover"
           priority
+          unoptimized
         />
       </div>
 
