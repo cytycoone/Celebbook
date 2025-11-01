@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { MemoryStorage } from "@/utils/storage";
+import { connectDb } from "@/config";
+import Booking from "@/models/Booking";
+import Celebrity from "@/models/Celebrity";
 import { sendBookingConfirmation } from "@/lib/emails";
 
 export async function GET(req: NextRequest) {
     try {
+        await connectDb();
+        
         const searchParams = req.nextUrl.searchParams;
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
@@ -12,49 +16,46 @@ export async function GET(req: NextRequest) {
         const startDate = searchParams.get('startDate');
         const endDate = searchParams.get('endDate');
 
-        let bookings = MemoryStorage.getAllBookings();
-
-        // Apply filters
+        // Build query
+        const query: any = {};
+        
         if (status) {
-            bookings = bookings.filter(b => b.status === status);
+            query.status = status;
         }
 
         if (search) {
-            bookings = bookings.filter(b => 
-                b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-                b.customerEmail.toLowerCase().includes(search.toLowerCase())
-            );
+            query.$or = [
+                { customerName: { $regex: search, $options: 'i' } },
+                { customerEmail: { $regex: search, $options: 'i' } }
+            ];
         }
 
         if (startDate || endDate) {
-            bookings = bookings.filter(b => {
-                const bookingDate = new Date(b.date);
-                if (startDate && bookingDate < new Date(startDate)) return false;
-                if (endDate && bookingDate > new Date(endDate)) return false;
-                return true;
-            });
+            query.date = {};
+            if (startDate) query.date.$gte = new Date(startDate);
+            if (endDate) query.date.$lte = new Date(endDate);
         }
 
-        // Sort by creation date (newest first)
-        bookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Get total count
+        const total = await Booking.countDocuments(query);
 
-        // Apply pagination
-        const total = bookings.length;
-        const startIndex = (page - 1) * limit;
-        const paginatedBookings = bookings.slice(startIndex, startIndex + limit);
+        // Get bookings with pagination and populate celebrity
+        const bookings = await Booking.find(query)
+            .populate('celebrityId', 'name imageUrl profession')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean();
 
-        // Populate celebrity data
-        const populatedBookings = paginatedBookings.map(booking => {
-            const celebrity = MemoryStorage.getCelebrityById(booking.celebrityId);
-            return {
-                ...booking,
-                celebrity: celebrity ? {
-                    name: celebrity.name,
-                    imageUrl: celebrity.imageUrl,
-                    profession: celebrity.profession
-                } : null
-            };
-        });
+        // Format response
+        const populatedBookings = bookings.map(booking => ({
+            ...booking,
+            celebrity: booking.celebrityId ? {
+                name: (booking.celebrityId as any).name,
+                imageUrl: (booking.celebrityId as any).imageUrl,
+                profession: (booking.celebrityId as any).profession
+            } : null
+        }));
 
         return NextResponse.json({
             bookings: populatedBookings,
@@ -76,21 +77,23 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        await connectDb();
+        
         const body = await req.json();
 
-        // Create booking using memory storage
-        const booking = MemoryStorage.createBooking(body);
-
-        // Get celebrity details for email
-        const celebrity = MemoryStorage.getCelebrityById(booking.celebrityId);
+        // Validate celebrity exists
+        const celebrity = await Celebrity.findById(body.celebrityId);
         if (!celebrity) {
             throw new Error('Celebrity not found');
         }
 
+        // Create booking in MongoDB
+        const booking = await Booking.create(body);
+
         // Send confirmation email
         try {
             await sendBookingConfirmation({
-                booking,
+                booking: booking.toObject(),
                 celebrity: {
                     name: celebrity.name,
                     profession: celebrity.profession
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest) {
 
         // Return response with populated celebrity data
         const populatedBooking = {
-            ...booking,
+            ...booking.toObject(),
             celebrity: {
                 name: celebrity.name,
                 imageUrl: celebrity.imageUrl,
