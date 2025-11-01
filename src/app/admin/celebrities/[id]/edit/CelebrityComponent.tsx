@@ -41,7 +41,20 @@ const CelebrityComponent = ({params}:any) => {
                     throw new Error('Failed to fetch celebrity');
                 }
                 const data = await res.json();
-                setCelebrity(data);
+                
+                // Ensure socialMedia field exists with default values
+                const celebrityData = {
+                    ...data,
+                    socialMedia: data.socialMedia || {
+                        instagram: '',
+                        twitter: '',
+                        tiktok: '',
+                        youtube: ''
+                    },
+                    coverImageUrl: data.coverImageUrl || ''
+                };
+                
+                setCelebrity(celebrityData);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'An error occurred');
             } finally {
