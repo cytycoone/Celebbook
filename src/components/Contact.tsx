@@ -20,8 +20,8 @@ const contactInfo = [
   {
     icon: FaPhone,
     title: 'Call Us',
-    details: '+1 (774) 235-5511',
-    link: 'tel:+17742355511'
+    details: '+1 (715) 204-4975',
+    link: 'tel:+17152044975'
   },
   {
     icon: FaMapMarkerAlt,
