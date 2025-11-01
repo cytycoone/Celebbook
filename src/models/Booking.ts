@@ -48,9 +48,14 @@ export const BookingSchema = new Schema({
         required: [true, 'Booking date is required'],
         validate: {
             validator: function(value: Date) {
-                return value > new Date();
+                // Allow today and future dates (compare dates only, not times)
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const bookingDate = new Date(value);
+                bookingDate.setHours(0, 0, 0, 0);
+                return bookingDate >= today;
             },
-            message: 'Booking date must be in the future'
+            message: 'Booking date cannot be in the past'
         }
     },
     amount: {
